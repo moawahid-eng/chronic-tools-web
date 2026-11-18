@@ -3,7 +3,6 @@ import io
 import zipfile
 import streamlit as st
 from pypdf import PdfWriter, PdfReader
-import streamlit.components.v1 as components
 
 # --- PENGATURAN HALAMAN ---
 st.set_page_config(
@@ -12,30 +11,31 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- FUNGSI GOOGLE ANALYTICS & USER TRACKING ---
+# --- FUNGSI GOOGLE ANALYTICS (LANGSUNG KE HALAMAN UTAMA) ---
 def add_google_analytics():
-    # Mendapatkan parameter dari URL (misal: ?user=nama_admin atau ?email=...)
+    ga_id = "G-PPE7GHXJCR"
+    
+    # Mengambil parameter user dari URL jika ada (contoh: ?user=nama_admin)
     query_params = st.query_params
     user_email = query_params.get("user", query_params.get("email", "Anonymous User"))
 
-    ga_code = f"""
+    ga_script = f"""
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PPE7GHXJCR"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id={ga_id}"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){{dataLayer.push(arguments);}}
       gtag('js', new Date());
-
-      // Konfigurasi GA4 dengan melampirkan info user dari URL query
-      gtag('config', 'G-PPE7GHXJCR', {{
+      
+      gtag('config', '{ga_id}', {{
         'user_id': '{user_email}'
       }});
     </script>
     """
-    # Menjalankan skrip tersembunyi
-    components.html(ga_code, height=0, width=0)
+    # Menyuntikkan langsung ke DOM utama Streamlit
+    st.markdown(ga_script, unsafe_allow_html=True)
 
-# Jalankan fungsi Google Analytics di setiap muat halaman
+# Jalankan fungsi Google Analytics
 add_google_analytics()
 
 st.title("🟣 CHRONIC TOOLS 3.0")
