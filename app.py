@@ -3,6 +3,7 @@ import io
 import zipfile
 import streamlit as st
 from pypdf import PdfWriter, PdfReader
+from pypdf.errors import PdfReadError
 
 # --- PENGATURAN HALAMAN ---
 st.set_page_config(
@@ -189,7 +190,8 @@ elif menu == "2. Merge Resep & eBilling":
                             scan_bytes = scan_f.getvalue()
                             ebill_bytes = ebill_f.getvalue()
                             
-                            if scan_bytes.startswith(b'<') or ebill_bytes.startswith(b'<'):
+                            # Validasi awal format file
+                            if scan_bytes.lstrip().startswith(b'<') or ebill_bytes.lstrip().startswith(b'<'):
                                 raise ValueError("File terdeteksi berisi kode HTML/Error, bukan PDF biner murni.")
                             
                             merger = PdfWriter()
@@ -204,6 +206,8 @@ elif menu == "2. Merge Resep & eBilling":
                             merger.close()
                             
                             merged_results[filename] = output_buffer.getvalue()
+                        except (PdfReadError, ValueError) as e:
+                            log_gagal.append((filename, filename, f"Format PDF tidak valid / Rusak: {str(e)}"))
                         except Exception as e:
                             log_gagal.append((filename, filename, str(e)))
                 
@@ -258,7 +262,7 @@ elif menu == "2. Merge Resep & eBilling":
                 )
                 
         if log_gagal:
-            st.error("⚠️ Catatan file yang dilewati karena nama tidak sama:")
+            st.error("⚠️ Catatan file yang dilewati karena nama tidak sama atau error:")
             for s, b, err in log_gagal:
                 st.write(f"- Scan: **{s}** | eBilling: **{b}** -> `{err}`")
 
