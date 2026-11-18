@@ -3,6 +3,7 @@ import io
 import zipfile
 import streamlit as st
 from pypdf import PdfWriter, PdfReader
+import streamlit.components.v1 as components
 
 # --- PENGATURAN HALAMAN ---
 st.set_page_config(
@@ -10,6 +11,32 @@ st.set_page_config(
     page_icon="🟣",
     layout="centered"
 )
+
+# --- FUNGSI GOOGLE ANALYTICS & USER TRACKING ---
+def add_google_analytics():
+    # Mendapatkan parameter dari URL (misal: ?user=nama_admin atau ?email=...)
+    query_params = st.query_params
+    user_email = query_params.get("user", query_params.get("email", "Anonymous User"))
+
+    ga_code = f"""
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PPE7GHXJCR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){{dataLayer.push(arguments);}}
+      gtag('js', new Date());
+
+      // Konfigurasi GA4 dengan melampirkan info user dari URL query
+      gtag('config', 'G-PPE7GHXJCR', {{
+        'user_id': '{user_email}'
+      }});
+    </script>
+    """
+    # Menjalankan skrip tersembunyi
+    components.html(ga_code, height=0, width=0)
+
+# Jalankan fungsi Google Analytics di setiap muat halaman
+add_google_analytics()
 
 st.title("🟣 CHRONIC TOOLS 3.0")
 st.markdown("### Otomatisasi Penggabungan Resep & eBilling (Web Edition)")
@@ -23,7 +50,6 @@ if "log_gagal" not in st.session_state:
     st.session_state["log_gagal"] = None
 if "session_name" not in st.session_state:
     st.session_state["session_name"] = "20 OKTOBER 2026"
-# Counter untuk memaksa reset komponen file_uploader
 if "uploader_key" not in st.session_state:
     st.session_state["uploader_key"] = 0
 
@@ -31,7 +57,6 @@ if "uploader_key" not in st.session_state:
 def reset_session_data():
     st.session_state["merged_results"] = None
     st.session_state["log_gagal"] = None
-    # Menaikkan angka key uploader agar komponennya ter-refresh total menjadi kosong
     st.session_state["uploader_key"] += 1
 
 # --- MENU NAVIGASI (SIDEBAR) ---
@@ -59,9 +84,9 @@ if menu == "1. Buat Folder & Sesi Baru":
             st.success(f"Sesi untuk folder **'{tanggal_input}'** berhasil diaktifkan!")
             st.markdown("""
             **Struktur Virtual yang disiapkan:**
-            * 📁 `SCAN_RESEP` (Tempat upload file scan resep)
-            * 📁 `eBILLING` (Tempat upload file e-billing)
-            * 📁 `Hasil_Merge` (Tempat hasil gabungan PDF)
+- 📁 `SCAN_RESEP` (Tempat upload file scan resep)
+- 📁 `eBILLING` (Tempat upload file e-billing)
+- 📁 `Hasil_Merge` (Tempat hasil gabungan PDF)
             """)
             st.warning("👉 Silakan pindah ke menu **'2. Merge Resep & eBilling'** di sebelah kiri untuk mulai mengunggah file.")
         else:
@@ -78,7 +103,6 @@ elif menu == "2. Merge Resep & eBilling":
     
     col1, col2 = st.columns(2)
     
-    # Menggunakan dynamic key agar uploader bisa di-reset total
     current_key = st.session_state["uploader_key"]
     
     with col1:
@@ -99,7 +123,6 @@ elif menu == "2. Merge Resep & eBilling":
             key=f"ebill_upload_{current_key}"
         )
     
-    # --- TOMBOL PINTASAN BERSIHKAN UPLOADER SEKALIGUS ---
     if scan_files or ebill_files:
         st.markdown("")
         if st.button("🗑️ Kosongkan Semua File yang Di-upload (Reset Uploader)"):
